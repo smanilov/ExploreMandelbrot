@@ -71,8 +71,6 @@ public class CanvasPanel extends JPanel {
 		
 		if (redraw) {
 			redraw = false;
-			Graphics g = drawing.getGraphics();
-			
 			Computer.drawMandelbrotCrop(
 					drawing,
 					foregroundColor,

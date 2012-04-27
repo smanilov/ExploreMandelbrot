@@ -1,10 +1,10 @@
 package smanilov.mandelbrot.compute;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.math3.complex.Complex;
@@ -63,11 +63,15 @@ public class Computer {
 						}
 						if (k == ITERATIONS) {
 							drawingLock.lock();
-							drawing.getGraphics().fillRect(i, j, 1, 1);
+							Graphics g = drawing.getGraphics();
+							g.setColor(foregroundColor);
+							g.fillRect(i, j, 1, 1);
 							drawingLock.unlock();
 						} else {
 							drawingLock.lock();
-							drawing.getGraphics().fillRect(i, j, 1, 1);
+							Graphics g = drawing.getGraphics();
+							g.setColor(backgroundColor);
+							g.fillRect(i, j, 1, 1);
 							drawingLock.unlock();
 						}
 					}
