@@ -26,7 +26,8 @@ public class Computer {
 	/**
 	 * Returns a crop view of the mandelbrot set.
 	 * @param drawing the image to draw on.
-	 * @param foregroundColor the color to use when drawing on the image.
+	 * @param foregroundColor the color to use when drawing Mandelbrot pixels.
+	 * @param backgroundColor the color to use when drawing non-Mandelbrot pixels.
 	 * @param drawingLock the lock to use for locking the image.
 	 * @param center Center of the crop, in units of the complex plane, w.r.t. the origin.
 	 * @param scale log2(pixels) per unit in the complex plane. 
@@ -34,6 +35,7 @@ public class Computer {
 	public static void drawMandelbrotCrop(
 			final Image drawing,
 			final Color foregroundColor,
+			final Color backgroundColor,
 			final ReentrantLock drawingLock,
 			final int scale, 
 			final Point2D center
@@ -46,7 +48,7 @@ public class Computer {
 				int width = drawing.getWidth(null);
 				int height = drawing.getHeight(null);
 				Point pixelCenter = new Point(width / 2, height / 2);
-				ArrayList <Point> result = new ArrayList<Point> ();
+				
 				for (int i = 0; i < width; ++i) {
 					
 					for (int j = 0; j < height; ++j) {
@@ -60,7 +62,10 @@ public class Computer {
 								break;
 						}
 						if (k == ITERATIONS) {
-							result.add(new Point(i, j));
+							drawingLock.lock();
+							drawing.getGraphics().fillRect(i, j, 1, 1);
+							drawingLock.unlock();
+						} else {
 							drawingLock.lock();
 							drawing.getGraphics().fillRect(i, j, 1, 1);
 							drawingLock.unlock();
@@ -84,17 +89,5 @@ public class Computer {
 		double real = (double) dx / (1 << scale) + center.getX();
 		double imaginary = (double) dy / (1 << scale) + center.getY();
 		return new Complex(real, imaginary);
-	}
-	
-	/**
-	 * Turns a complex number to pixel coordinates.
-	 * @param c The complex number to convert.
-	 * @param scale The scale, see other places.
-	 * @param center The center of the view on the complex plane.
-	 */
-	private static Point toAbsolutePixel(Complex c, int scale, Point2D center) {
-		int x = (int) (c.getReal() * (1 << scale));
-		int y = (int) (-c.getImaginary() * (1 << scale));
-		return new Point(x, y);
 	}
 }
