@@ -5,6 +5,9 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.math3.complex.Complex;
@@ -49,31 +52,42 @@ public class Computer {
 				int height = drawing.getHeight(null);
 				Point pixelCenter = new Point(width / 2, height / 2);
 				
+				List <Integer> xs = new ArrayList <Integer> (width);
+				List <Integer> ys = new ArrayList <Integer> (width);
 				for (int i = 0; i < width; ++i) {
+					xs.add(i);
+				}
+				for (int i = 0; i < height; ++i) {
+					ys.add(i);
+				}
+				
+				Collections.shuffle(xs);
+				
+				for (int r = 0; r < width * height; ++r) {
+					int i = xs.get(r / height % width);
+					int j = ys.get(r % height);
 					
-					for (int j = 0; j < height; ++j) {
-						
-						Complex c = toComplex(i, j, pixelCenter, scale, center);
-						Complex z = new Complex(0.0, 0.0);
-						int k;
-						for (k = 0; k < ITERATIONS; ++k) {
-							z = z.multiply(z).add(c);
-							if (z.abs() > 2)
-								break;
-						}
-						if (k == ITERATIONS) {
-							drawingLock.lock();
-							Graphics g = drawing.getGraphics();
-							g.setColor(foregroundColor);
-							g.fillRect(i, j, 1, 1);
-							drawingLock.unlock();
-						} else {
-							drawingLock.lock();
-							Graphics g = drawing.getGraphics();
-							g.setColor(backgroundColor);
-							g.fillRect(i, j, 1, 1);
-							drawingLock.unlock();
-						}
+					Complex c = toComplex(i, j, pixelCenter, scale, center);
+					Complex z = new Complex(0.0, 0.0);
+					int k;
+					for (k = 0; k < ITERATIONS; ++k) {
+						z = z.multiply(z).add(c);
+						if (z.abs() > 2)
+							break;
+					}
+					if (k == ITERATIONS) {
+						drawingLock.lock();
+						Graphics g = drawing.getGraphics();
+						g.setColor(foregroundColor);
+						g.fillRect(i, j, 1, 1);
+						drawingLock.unlock();
+					} else {
+						drawingLock.lock();
+						Graphics g = drawing.getGraphics();
+						int v = k * 255 / ITERATIONS;
+						g.setColor(new Color(v, v, 0));
+						g.fillRect(i, j, 1, 1);
+						drawingLock.unlock();
 					}
 				}
 			}
