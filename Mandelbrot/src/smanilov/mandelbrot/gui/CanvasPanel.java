@@ -72,12 +72,11 @@ public class CanvasPanel extends JPanel {
 		if (redraw) {
 			redraw = false;
 			Graphics g = drawing.getGraphics();
-			g.setColor(backgroundColor);
-			g.fillRect(0, 0, getWidth(), getHeight());
 			
 			Computer.drawMandelbrotCrop(
 					drawing,
 					foregroundColor,
+					backgroundColor,
 					drawingLock,
 					Camera.getScale(), 
 					Camera.getCenter()
