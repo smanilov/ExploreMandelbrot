@@ -5,10 +5,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
@@ -77,7 +75,6 @@ public class CanvasPanel extends JPanel {
 			g.setColor(backgroundColor);
 			g.fillRect(0, 0, getWidth(), getHeight());
 			
-			ArrayList <Point> points;
 			Computer.drawMandelbrotCrop(
 					drawing,
 					foregroundColor,
@@ -85,10 +82,6 @@ public class CanvasPanel extends JPanel {
 					Camera.getScale(), 
 					Camera.getCenter()
 			);
-			
-//			for (Point p: points) {
-//				g.fillRect((int)p.getX(), (int)p.getY(), 1, 1);
-//			}
 		}
 		
 		drawingLock.lock();

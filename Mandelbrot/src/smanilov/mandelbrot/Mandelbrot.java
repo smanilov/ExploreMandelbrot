@@ -6,7 +6,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 import smanilov.mandelbrot.gui.CanvasPanel;
 import smanilov.mandelbrot.gui.ControlPanel;

@@ -27,13 +27,6 @@ public class ControlPanel extends JPanel {
 		JPanel bottom = createBottomRow();
 		add(bottom, BorderLayout.SOUTH);
 	}
-	
-	/**
-	 * Repaints the parent control.
-	 */
-	private void repaintParent() {
-		getParent().repaint();
-	}
 
 	/**
 	 * Creates the top row of buttons and returns them.
