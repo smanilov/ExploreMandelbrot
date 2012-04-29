@@ -19,8 +19,9 @@ public class ControlPanel extends JPanel {
 	private JButton moveRightButton;
 	
 	public ControlPanel() {
-		super(new BorderLayout());
+		super(true);
 		
+		setLayout(new BorderLayout());
 		JPanel top = createTopRow();
 		add(top, BorderLayout.NORTH);
 		
