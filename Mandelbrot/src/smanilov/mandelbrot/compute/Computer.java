@@ -5,15 +5,21 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.math3.complex.Complex;
 
 /**
- * Computes the points from the Mandelbrot set.
+ * Computes and draws the points from the Mandelbrot set.
+ * 
+ * The drawing is done in steps and when a new step is invoked the previous 
+ * one is stopped.
+ * 
+ * TODO: 
+ *  1. Anti-aliasing
+ *  2. Simple color schemes (set color, list of color gradient with list of positions on the gradient [e.g. [0.0, 0.5, 1.0]])
  * @author szm
  */
 public class Computer {
@@ -26,12 +32,38 @@ public class Computer {
 	 */
 	private static final int ITERATIONS = 100;
 
+	private static final int NUM_SHADERS = 1;
+	
 	/**
 	 * The identifier of the current producer thread. Used to stop old ones.
 	 */
 	private static int currentDrawingId = -1;
 	
-	private static Thread[] consumerThread;
+	/**
+	 * A list containing the points that should be drawn next.
+	 */
+	private static Queue<Point> toDoList;
+	
+	/**
+	 * Used for more complex locking of the toDoList.
+	 */
+	private static final ReentrantLock queueLock = new ReentrantLock(); 
+	
+	/**
+	 * How many points were drawn so far by the current drawing step.
+	 */
+	private static int nDrawn = 0;
+	
+	/**
+	 * Such a waste of memory...
+	 */
+	private static final ReentrantLock nDrawnLock = new ReentrantLock(); 
+	
+	/**
+	 * The starting time of the current drawing step.
+	 */
+	private static long startTime;
+	
 	
 	/**
 	 * Returns a crop view of the Mandelbrot set.
@@ -50,13 +82,34 @@ public class Computer {
 			final int scale, 
 			final Point2D center
 	) {
-		++currentDrawingId;
+		initDrawStep();
 		
 		Thread pt = createProducerThread(drawing.getWidth(null), drawing.getHeight(null));
 		pt.start();
 		
-		Thread sh = createShaderThread(drawing, foregroundColor, backgroundColor, drawingLock, scale, center);
-		sh.start();
+		for (int i = 0; i < NUM_SHADERS; ++i) {
+			Thread sh = createShaderThread(drawing, foregroundColor, backgroundColor, drawingLock, scale, center);
+			sh.start();			
+		}
+	}
+
+	/**
+	 * Resets the state of the class for a new draw step.
+	 */
+	private static void initDrawStep() {
+		++currentDrawingId;
+		if (toDoList != null) {
+			queueLock.lock();
+			toDoList.clear();
+			queueLock.unlock();
+		}
+		toDoList = new LinkedBlockingQueue<Point>();
+		
+		nDrawnLock.lock();
+		nDrawn = 0;
+		nDrawnLock.unlock();
+		
+		startTime = System.currentTimeMillis();
 	}
 
 	/**
@@ -70,6 +123,7 @@ public class Computer {
 
 			@Override
 			public void run() {
+				System.out.println("Producer: [START]");
 				super.run();
 				int id = currentDrawingId;
 				
@@ -84,11 +138,13 @@ public class Computer {
 					x = (int) (width * Math.random());
 					y = (int) (height * Math.random());
 					if (!added[y][x]) {
-						/* TODO: Actually add */
+						toDoList.add(new Point(x, y));
 						++nAdded;
 						added[y][x] = true;
 					}
 				}
+				long interval = System.currentTimeMillis() - startTime;
+				System.out.println("Producer: [END after " + interval + " ms]");
 			}
 		};
 		return producerThread;
@@ -110,48 +166,83 @@ public class Computer {
 
 			@Override
 			public void run() {
+				System.out.println("Shader: [START]");
 				int id = currentDrawingId;
 				super.run();
 				
-//				for (int r = 0; r < width * height; ++r) {
-//				int i = xs.get(r / height % width);
-//				int j = ys.get(r % height);
-//				
-//				Complex c = toComplex(i, j, pixelCenter, scale, center);
-//				Complex z = new Complex(0.0, 0.0);
-//				int k;
-//				for (k = 0; k < ITERATIONS; ++k) {
-//					z = z.multiply(z).add(c);
-//					if (z.abs() > 2)
-//						break;
-//				}
-//				if (k == ITERATIONS) {
-//					drawingLock.lock();
-//					Graphics g = drawing.getGraphics();
-//					g.setColor(foregroundColor);
-//					g.fillRect(i, j, 1, 1);
-//					drawingLock.unlock();
-//				} else {
-//					drawingLock.lock();
-//					Graphics g = drawing.getGraphics();
-//					int v = k * 255 / ITERATIONS;
-//					g.setColor(new Color(v, v, 0));
-//					g.fillRect(i, j, 1, 1);
-//					drawingLock.unlock();
-//				}
+				int width = drawing.getWidth(null);
+				int height = drawing.getHeight(null);
+				
+				Point pixelCenter = new Point(width / 2, height / 2);
+				
+				while (nDrawn < width * height) {
+					// TODO: remove busy-wait
+					while (true) {
+						queueLock.lock();
+						if (toDoList.size() == 0) {
+							queueLock.unlock();
+							break;
+						}
+						Point p = toDoList.poll();
+						int i = p.x;
+						int j = p.y;
+						queueLock.unlock();
+						
+						Complex c = toComplex(i, j, pixelCenter, scale, center);
+						Complex z = new Complex(0.0, 0.0);
+						int k;
+						for (k = 0; k < ITERATIONS; ++k) {
+							if (id != currentDrawingId)
+								return;
+							z = z.multiply(z).add(c);
+							if (z.abs() > 2)
+								break;
+						}
+						if (k == ITERATIONS) {
+							drawingLock.lock();
+							Graphics g = drawing.getGraphics();
+							g.setColor(foregroundColor);
+							g.fillRect(i, j, 1, 1);
+							drawingLock.unlock();
+						} else {
+							drawingLock.lock();
+							Graphics g = drawing.getGraphics();
+							Color color = mixColors(backgroundColor, foregroundColor, (double) k / ITERATIONS);
+							g.setColor(color);
+							g.fillRect(i, j, 1, 1);
+							drawingLock.unlock();
+						}
+						nDrawnLock.lock();
+						++nDrawn;
+						nDrawnLock.unlock();
+						
+					}
+				}
+				long interval = System.currentTimeMillis() - startTime;
+				System.out.println("Shader: [END after " + interval + " ms]");
 			}
 		};
 		return shaderThread;
 	}
 	
 	/**
+	 * Mixes the given colors in the given proportion.
+	 */
+	private static Color mixColors(Color c1, Color c2, double proportion) {
+		Color result = new Color(
+				(int)(c1.getRed() * proportion + c2.getRed() * (1 - proportion)),
+				(int)(c1.getGreen() * proportion + c2.getGreen() * (1 - proportion)),
+				(int)(c1.getBlue() * proportion + c2.getBlue() * (1 - proportion))
+		);
+		return result;
+	}
+	
+	/**
 	 * Converts a pixel coordinate into a complex number.
-	 * TODO: use for memoization / re-use of old computations.
 	 * @param pixelCenter The center of the pixel coordinate system.
 	 * @param scale log2(pixels) per unit in the complex plane. 
 	 * @param center The center of the view on the complex plane.
 	 */
-	@SuppressWarnings("unused")
 	private static Complex toComplex(int x, int y, Point pixelCenter, int scale, Point2D center) {
 		int dx = (int) (x - pixelCenter.getX());
 		int dy = (int) (- y + pixelCenter.getY());

@@ -11,7 +11,10 @@ import smanilov.mandelbrot.gui.CanvasPanel;
 import smanilov.mandelbrot.gui.ControlPanel;
 
 /**
- * The main file. Constructs the GUI.
+ * The main class. Constructs the GUI.
+ * 
+ * TODO:
+ * 	 1. Add a key listener for keyboard control.
  * @author szm
  */
 public class Mandelbrot {

@@ -25,11 +25,11 @@ public class CanvasPanel extends JPanel {
 	/**
 	 * Dark blue.
 	 */
-	private static final Color backgroundColor = new Color(5, 13, 30);
+	private static final Color backgroundColor = new Color(249, 255, 32);
 	/**
 	 * Pale yellow.
 	 */
-	private static final Color foregroundColor = new Color(249, 255, 238);
+	private static final Color foregroundColor = new Color(0, 0, 0);
 	
 	/**
 	 * The current render of the Mandelbrot set.

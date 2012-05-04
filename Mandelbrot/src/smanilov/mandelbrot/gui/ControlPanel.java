@@ -9,6 +9,19 @@ import javax.swing.JPanel;
 
 import smanilov.mandelbrot.compute.Camera;
 
+/**
+ * Includes the controlling components - arrows, +, -
+ * 
+ * TODO:
+ *  1. Basic mode
+ *  	1. Color mixer for the color scheme
+ *  2. Advanced
+ *		1. Add iterations entry
+ *		2. Shader threads entry
+ *		3. Anti-aliasing entry
+ *  
+ * @author szm
+ */
 public class ControlPanel extends JPanel {
 	
 	private JButton zoomOutButton;
