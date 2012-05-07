@@ -5,9 +5,14 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.awt.image.RenderedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
+
+import javax.imageio.ImageIO;
 
 import org.apache.commons.math3.complex.Complex;
 
@@ -28,9 +33,9 @@ public class Computer {
 	 * Amount of iterations of the sequence used to decide if a point belongs 
 	 * to the Mandelbrot set. Ideally this would be infinity. The sequence is
 	 * [z_0 = 0, z_n = z_(n-1) ^ 2 + c], where c is the point to test. Each
-	 * z_k where k < ITERATIONS should be <= 2. 
+	 * z_k where k < iterations should be <= 2. 
 	 */
-	private static final int ITERATIONS = 100;
+	private static int iterations = 100;
 
 	private static final int NUM_SHADERS = 1;
 	
@@ -93,6 +98,13 @@ public class Computer {
 		}
 	}
 
+	/**
+	 * Set the number of maximum iterations per pixel.
+	 */
+	public static void setIterations(int iterations) {
+		Computer.iterations = iterations;
+	}
+	
 	/**
 	 * Resets the state of the class for a new draw step.
 	 */
@@ -168,6 +180,7 @@ public class Computer {
 			public void run() {
 				System.out.println("Shader: [START]");
 				int id = currentDrawingId;
+				int currentIterations = iterations;
 				super.run();
 				
 				int width = drawing.getWidth(null);
@@ -191,14 +204,14 @@ public class Computer {
 						Complex c = toComplex(i, j, pixelCenter, scale, center);
 						Complex z = new Complex(0.0, 0.0);
 						int k;
-						for (k = 0; k < ITERATIONS; ++k) {
+						for (k = 0; k < currentIterations; ++k) {
 							if (id != currentDrawingId)
 								return;
 							z = z.multiply(z).add(c);
 							if (z.abs() > 2)
 								break;
 						}
-						if (k == ITERATIONS) {
+						if (k == currentIterations) {
 							drawingLock.lock();
 							Graphics g = drawing.getGraphics();
 							g.setColor(foregroundColor);
@@ -207,7 +220,7 @@ public class Computer {
 						} else {
 							drawingLock.lock();
 							Graphics g = drawing.getGraphics();
-							Color color = mixColors(backgroundColor, foregroundColor, (double) k / ITERATIONS);
+							Color color = mixColors(backgroundColor, foregroundColor, (double) k / currentIterations);
 							g.setColor(color);
 							g.fillRect(i, j, 1, 1);
 							drawingLock.unlock();
@@ -220,11 +233,22 @@ public class Computer {
 				}
 				long interval = System.currentTimeMillis() - startTime;
 				System.out.println("Shader: [END after " + interval + " ms]");
+				saveImage(drawing, drawingLock);
 			}
 		};
 		return shaderThread;
 	}
 	
+	private static void saveImage(Image drawing, ReentrantLock drawingLock) {
+		drawingLock.lock();
+		try {
+			ImageIO.write((RenderedImage) drawing, "png", new File("mandelbrot.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		drawingLock.unlock();
+	}
+
 	/**
 	 * Mixes the given colors in the given proportion.
 	 */

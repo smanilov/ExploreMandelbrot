@@ -1,13 +1,19 @@
 package smanilov.mandelbrot.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.jar.JarEntry;
 
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
+import smanilov.mandelbrot.Mandelbrot;
 import smanilov.mandelbrot.compute.Camera;
+import smanilov.mandelbrot.compute.Computer;
 
 /**
  * Includes the controlling components - arrows, +, -
@@ -31,15 +37,53 @@ public class ControlPanel extends JPanel {
 	private JButton moveDownButton;
 	private JButton moveRightButton;
 	
+	private JTextField iterationsTextField;
+	private JButton redrawButton;
+	
 	public ControlPanel() {
 		super(true);
-		
+
 		setLayout(new BorderLayout());
+		
+		JPanel navigationPane = createNavigationPane();
+		
+		add(navigationPane, BorderLayout.NORTH);
+		
+		JPanel iterationsPane = createIterationsPane();
+		add(iterationsPane, BorderLayout.CENTER);
+		
+		JButton resolutionary = new JButton("1366 x 768");
+		resolutionary.addActionListener(new ResolutionaryButtonListener());
+		add(resolutionary, BorderLayout.SOUTH);
+//		iterationsTextField
+	}
+
+	private JPanel createNavigationPane() {
+		JPanel navigationPane = new JPanel(new BorderLayout());
+		
 		JPanel top = createTopRow();
-		add(top, BorderLayout.NORTH);
+		navigationPane.add(top, BorderLayout.NORTH);
 		
 		JPanel bottom = createBottomRow();
-		add(bottom, BorderLayout.SOUTH);
+		navigationPane.add(bottom, BorderLayout.SOUTH);
+		
+		return navigationPane;
+	}
+	
+	private JPanel createIterationsPane() {
+		JPanel iterationsPane = new JPanel(new BorderLayout());
+		
+		JLabel iterationsLabel = new JLabel("Iterations:");
+		iterationsPane.add(iterationsLabel, BorderLayout.NORTH);
+		
+		iterationsTextField = new JTextField();
+		iterationsPane.add(iterationsTextField, BorderLayout.CENTER);
+		
+		redrawButton = new JButton("Redraw");
+		redrawButton.addActionListener(new RedrawButtonListener());
+		iterationsPane.add(redrawButton, BorderLayout.SOUTH);
+		
+		return iterationsPane;
 	}
 
 	/**
@@ -48,18 +92,15 @@ public class ControlPanel extends JPanel {
 	private JPanel createTopRow() {
 		JPanel top = new JPanel(new BorderLayout());
 		
-		zoomOutButton = new JButton();
-		zoomOutButton.setText("-");
+		zoomOutButton = new JButton("-");
 		zoomOutButton.addActionListener(new ZoomOutButtonListener());
 		top.add(zoomOutButton, BorderLayout.WEST);
 		
-		moveUpButton = new JButton();
-		moveUpButton.setText("^");
+		moveUpButton = new JButton("^");
 		moveUpButton.addActionListener(new MoveUpButtonListener());
 		top.add(moveUpButton, BorderLayout.CENTER);
 
-		zoomInButton = new JButton();
-		zoomInButton.setText("+");
+		zoomInButton = new JButton("+");
 		zoomInButton.addActionListener(new ZoomInButtonListener());
 		top.add(zoomInButton, BorderLayout.EAST);
 		
@@ -91,9 +132,21 @@ public class ControlPanel extends JPanel {
 	}
 	
 	/**
-	 * Called when a button is used. Signals the parent.
+	 * Called when a button is used. Sets the iterations of the Computer and 
+	 * signals the parent.
 	 */
 	private void used() {
+		String text = iterationsTextField.getText();
+		
+		int iterations = -1;
+		try {
+			iterations = Integer.parseInt(text);
+		} catch (NumberFormatException exc) {
+			iterationsTextField.setText("0");
+		}
+		
+		if (iterations > 0)
+			Computer.setIterations(iterations);
 		firePropertyChange("used", false, true);
 	}
 	
@@ -166,6 +219,33 @@ public class ControlPanel extends JPanel {
 		public void actionPerformed(ActionEvent e) {
 			Camera.moveRight();
 			used();
+		}
+	}
+	
+	/**
+	 * Tells the parent to redraw the canvas.
+	 * @author szm
+	 */
+	private class RedrawButtonListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			used();
+		}
+	}
+	
+	/**
+	 * Tells the parent to redraw the canvas.
+	 * @author szm
+	 */
+	private class ResolutionaryButtonListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			Mandelbrot.canvasFrame.setBounds(
+					-Mandelbrot.canvasFrame.insets().left, 
+					-Mandelbrot.canvasFrame.insets().top, 
+					1366 + Mandelbrot.canvasFrame.insets().left + Mandelbrot.canvasFrame.insets().right, 
+					768 + Mandelbrot.canvasFrame.insets().top + Mandelbrot.canvasFrame.insets().bottom
+			);
 		}
 	}
 }
