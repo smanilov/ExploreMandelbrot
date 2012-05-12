@@ -202,9 +202,9 @@ public class Computer {
 						queueLock.unlock();
 						
 						Complex c = toComplex(i, j, pixelCenter, scale, center);
-						Complex z = new Complex(0.0, 0.0);
+						Complex z = new Complex(c.getReal(), c.getImaginary());
 						int k;
-						for (k = 0; k < currentIterations; ++k) {
+						for (k = 1; k < currentIterations; ++k) {
 							if (id != currentDrawingId)
 								return;
 							z = z.multiply(z).add(c);

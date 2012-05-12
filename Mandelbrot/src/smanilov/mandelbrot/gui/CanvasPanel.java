@@ -25,7 +25,7 @@ public class CanvasPanel extends JPanel {
 	/**
 	 * Dark blue.
 	 */
-	private static final Color backgroundColor = new Color(0, 255, 0);
+	private static final Color backgroundColor = new Color(36, 201, 255);
 	/**
 	 * Pale yellow.
 	 */
