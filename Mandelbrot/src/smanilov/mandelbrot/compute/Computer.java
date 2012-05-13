@@ -37,7 +37,15 @@ public class Computer {
 	 */
 	private static int iterations = 100;
 
-	private static final int NUM_SHADERS = 1;
+	/**
+	 * Indicates the number of shader threads that are running.
+	 */
+	private static final int NUM_SHADERS = 10;
+	
+	/**
+	 * The Anti-Aliasing rate. SQRT of number of samples per pixel.
+	 */
+	private static final int ANTIALIASING = 10;
 	
 	/**
 	 * The identifier of the current producer thread. Used to stop old ones.
@@ -201,16 +209,27 @@ public class Computer {
 						int j = p.y;
 						queueLock.unlock();
 						
-						Complex c = toComplex(i, j, pixelCenter, scale, center);
-						Complex z = new Complex(c.getReal(), c.getImaginary());
-						int k;
-						for (k = 1; k < currentIterations; ++k) {
-							if (id != currentDrawingId)
-								return;
-							z = z.multiply(z).add(c);
-							if (z.abs() > 2)
-								break;
+						double k = 0;
+						
+						double aliasInterval = 1.0 / ANTIALIASING;
+						for (int aliasx = 0; aliasx < ANTIALIASING; ++aliasx) {
+							for (int aliasy = 0; aliasy < ANTIALIASING; ++aliasy) {
+								double x = i - 0.5 + aliasInterval / 2 + aliasInterval * aliasx;
+								double y = j - 0.5 + aliasInterval / 2 + aliasInterval * aliasy;
+								Complex c = toComplex(x, y, pixelCenter, scale, center);
+								Complex z = new Complex(c.getReal(), c.getImaginary());
+								k += 1.0;
+								for (int aliask = 1; aliask < currentIterations; ++aliask, k += 1.0) {
+									if (id != currentDrawingId)
+										return;
+									z = z.multiply(z).add(c);
+									if (z.abs() > 2)
+										break;
+								}
+							}
 						}
+						
+						k /= ANTIALIASING * ANTIALIASING; 
 						if (k == currentIterations) {
 							drawingLock.lock();
 							Graphics g = drawing.getGraphics();
@@ -267,9 +286,9 @@ public class Computer {
 	 * @param scale log2(pixels) per unit in the complex plane. 
 	 * @param center The center of the view on the complex plane.
 	 */
-	private static Complex toComplex(int x, int y, Point pixelCenter, int scale, Point2D center) {
-		int dx = (int) (x - pixelCenter.getX());
-		int dy = (int) (- y + pixelCenter.getY());
+	private static Complex toComplex(double x, double y, Point pixelCenter, int scale, Point2D center) {
+		double dx = (double) (x - pixelCenter.getX());
+		double dy = (double) (- y + pixelCenter.getY());
 		double real = (double) dx / (1 << scale) + center.getX();
 		double imaginary = (double) dy / (1 << scale) + center.getY();
 		return new Complex(real, imaginary);
