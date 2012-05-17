@@ -40,13 +40,13 @@ public class Computer {
 	/**
 	 * Indicates the number of shader threads that are running.
 	 */
-	private static final int NUM_SHADERS = 10;
+	private static int shaders = 1;
 	
 	/**
 	 * The Anti-Aliasing rate. SQRT of number of samples per pixel.
 	 */
-	private static final int ANTIALIASING = 10;
-	
+	private static int antiAliasing = 1;
+
 	/**
 	 * The identifier of the current producer thread. Used to stop old ones.
 	 */
@@ -63,14 +63,9 @@ public class Computer {
 	private static final ReentrantLock queueLock = new ReentrantLock(); 
 	
 	/**
-	 * How many points were drawn so far by the current drawing step.
+	 * Is there a producer running?
 	 */
-	private static int nDrawn = 0;
-	
-	/**
-	 * Such a waste of memory...
-	 */
-	private static final ReentrantLock nDrawnLock = new ReentrantLock(); 
+	private static boolean producerRunning = false;
 	
 	/**
 	 * The starting time of the current drawing step.
@@ -100,18 +95,57 @@ public class Computer {
 		Thread pt = createProducerThread(drawing.getWidth(null), drawing.getHeight(null));
 		pt.start();
 		
-		for (int i = 0; i < NUM_SHADERS; ++i) {
+		for (int i = 0; i < shaders; ++i) {
 			Thread sh = createShaderThread(drawing, foregroundColor, backgroundColor, drawingLock, scale, center);
 			sh.start();			
 		}
 	}
 
+	
+	/**
+	 * Get the number of maximum iterations per pixel.
+	 */
+	public static int getIterations() {
+		return Computer.iterations;
+	}
+	
 	/**
 	 * Set the number of maximum iterations per pixel.
 	 */
 	public static void setIterations(int iterations) {
 		Computer.iterations = iterations;
 	}
+	
+	/**
+	 * Get the number of shaders threads in the Computer.
+	 */
+	public static int getShaders() {
+		return shaders;
+	}
+
+	/**
+	 * Set the number of shaders threads in the Computer.
+	 */
+	public static void setShaders(int shaders) {
+		Computer.shaders = shaders;
+	}
+
+	/**
+	 * Get the amount of anti-aliasing to perform.
+	 * @return The square root of the number of samples per pixel.
+	 */
+	public static int getAntiAliasing() {
+		return antiAliasing;
+	}
+
+	/**
+	 * Set the amount of anti-aliasing to perform.
+	 * @param antialiasing The square root of the number of samples per pixel.
+	 */
+	public static void setAntiAliasing(int antialiasing) {
+		Computer.antiAliasing = antialiasing;
+	}
+	
 	
 	/**
 	 * Resets the state of the class for a new draw step.
@@ -124,10 +158,7 @@ public class Computer {
 			queueLock.unlock();
 		}
 		toDoList = new LinkedBlockingQueue<Point>();
-		
-		nDrawnLock.lock();
-		nDrawn = 0;
-		nDrawnLock.unlock();
+		producerRunning = false;
 		
 		startTime = System.currentTimeMillis();
 	}
@@ -144,6 +175,7 @@ public class Computer {
 			@Override
 			public void run() {
 				System.out.println("Producer: [START]");
+				producerRunning = true;
 				super.run();
 				int id = currentDrawingId;
 				
@@ -164,6 +196,7 @@ public class Computer {
 					}
 				}
 				long interval = System.currentTimeMillis() - startTime;
+				producerRunning = false;
 				System.out.println("Producer: [END after " + interval + " ms]");
 			}
 		};
@@ -196,7 +229,7 @@ public class Computer {
 				
 				Point pixelCenter = new Point(width / 2, height / 2);
 				
-				while (nDrawn < width * height) {
+				while (producerRunning) {
 					// TODO: remove busy-wait
 					while (true) {
 						queueLock.lock();
@@ -211,9 +244,9 @@ public class Computer {
 						
 						double k = 0;
 						
-						double aliasInterval = 1.0 / ANTIALIASING;
-						for (int aliasx = 0; aliasx < ANTIALIASING; ++aliasx) {
-							for (int aliasy = 0; aliasy < ANTIALIASING; ++aliasy) {
+						double aliasInterval = 1.0 / antiAliasing;
+						for (int aliasx = 0; aliasx < antiAliasing; ++aliasx) {
+							for (int aliasy = 0; aliasy < antiAliasing; ++aliasy) {
 								double x = i - 0.5 + aliasInterval / 2 + aliasInterval * aliasx;
 								double y = j - 0.5 + aliasInterval / 2 + aliasInterval * aliasy;
 								Complex c = toComplex(x, y, pixelCenter, scale, center);
@@ -229,7 +262,7 @@ public class Computer {
 							}
 						}
 						
-						k /= ANTIALIASING * ANTIALIASING; 
+						k /= antiAliasing * antiAliasing; 
 						if (k == currentIterations) {
 							drawingLock.lock();
 							Graphics g = drawing.getGraphics();
@@ -244,10 +277,6 @@ public class Computer {
 							g.fillRect(i, j, 1, 1);
 							drawingLock.unlock();
 						}
-						nDrawnLock.lock();
-						++nDrawn;
-						nDrawnLock.unlock();
-						
 					}
 				}
 				long interval = System.currentTimeMillis() - startTime;

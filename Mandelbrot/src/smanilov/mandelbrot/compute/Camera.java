@@ -81,16 +81,31 @@ public class Camera {
 
 
 	/**
+	 * Set the center of the camera on the complex plane.
+	 */
+	public static void setCenter(double x, double y) {
+		Camera.center.setLocation(x, y);
+	}
+	
+
+	/**
 	 * Get the center of the camera on the complex plane.
 	 */
 	public static Point2D getCenter() {
 		return center;
 	}
-
 	
 	/**
-	 * Gets the scale of the camera view. The value corresponds to
-	 * log2(pixels) per unit in the complex plane. 
+	 * Set the scale of the camera view. 
+	 * @param scale log2(pixels) per unit in the complex plane. 
+	 */
+	public static void setScale(int scale) {
+		Camera.scale = scale;
+	}
+	
+	/**
+	 * Get the scale of the camera view.
+	 * @return log2(pixels) per unit in the complex plane. 
 	 */
 	public static int getScale() {
 		return scale;

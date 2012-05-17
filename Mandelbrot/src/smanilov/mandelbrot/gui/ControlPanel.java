@@ -9,7 +9,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import smanilov.mandelbrot.Mandelbrot;
 import smanilov.mandelbrot.compute.Camera;
 import smanilov.mandelbrot.compute.Computer;
 
@@ -20,9 +19,9 @@ import smanilov.mandelbrot.compute.Computer;
  *  1. Basic mode
  *  	1. Color mixer for the color scheme
  *  2. Advanced
- *		1. Add iterations entry
+ *		-1. Add iterations entry
  *		2. Shader threads entry
- *		3. Anti-aliasing entry
+ *		-3. Anti-aliasing entry
  *  
  * @author szm
  */
@@ -35,7 +34,14 @@ public class ControlPanel extends JPanel {
 	private JButton moveDownButton;
 	private JButton moveRightButton;
 	
+	private JTextField xCoordinateTextField;
+	private JTextField yCoordinateTextField;
+	private JTextField scaleTextField;
+	private JButton currentPositionButton;
+	
 	private JTextField iterationsTextField;
+	private JTextField shadersTextField;
+	private JTextField antiAliasingTextField;
 	private JButton redrawButton;
 	
 	public ControlPanel() {
@@ -44,16 +50,10 @@ public class ControlPanel extends JPanel {
 		setLayout(new BorderLayout());
 		
 		JPanel navigationPane = createNavigationPane();
-		
 		add(navigationPane, BorderLayout.NORTH);
 		
-		JPanel iterationsPane = createIterationsPane();
-		add(iterationsPane, BorderLayout.CENTER);
-		
-		JButton resolutionary = new JButton("1366 x 768");
-		resolutionary.addActionListener(new ResolutionaryButtonListener());
-		add(resolutionary, BorderLayout.SOUTH);
-//		iterationsTextField
+		JPanel entriesPane = createEntriesPane();
+		add(entriesPane, BorderLayout.SOUTH);
 	}
 
 	private JPanel createNavigationPane() {
@@ -68,6 +68,93 @@ public class ControlPanel extends JPanel {
 		return navigationPane;
 	}
 	
+	
+	private JPanel createEntriesPane() {
+		JPanel entriesPane = new JPanel(new BorderLayout());
+		
+		JPanel navigationPane = createNavigationEntriesPane();
+		entriesPane.add(navigationPane, BorderLayout.NORTH);		
+		
+		JPanel advancedPane = createAdvancedEntriesPane();
+		entriesPane.add(advancedPane, BorderLayout.SOUTH);
+		
+		return entriesPane;
+	}
+	
+	
+	private JPanel createNavigationEntriesPane() {
+		JPanel navigationPane = new JPanel(new BorderLayout());
+
+		JPanel xCoordinatePane = createXCoordinatePane();
+		navigationPane.add(xCoordinatePane, BorderLayout.NORTH);
+		
+		JPanel yCoordinatePane = createYCoordinatePane();
+		navigationPane.add(yCoordinatePane, BorderLayout.CENTER);
+		
+		JPanel scalePane = createScalePane();
+		navigationPane.add(scalePane, BorderLayout.SOUTH);
+		return navigationPane;
+	}
+	
+	private JPanel createAdvancedEntriesPane() {
+		JPanel advancedPane = new JPanel(new BorderLayout());
+
+		JPanel iterationsPane = createIterationsPane();
+		advancedPane.add(iterationsPane, BorderLayout.NORTH);
+		
+		JPanel threadsPane = createShadersPane();
+		advancedPane.add(threadsPane, BorderLayout.CENTER);
+		
+		JPanel antiAliasingPane = createAntiAliasingPane();
+		advancedPane.add(antiAliasingPane, BorderLayout.SOUTH);
+		return advancedPane;
+	}
+
+	
+	private JPanel createXCoordinatePane() {
+		JPanel xCoordinatePane = new JPanel(new BorderLayout());
+		
+		JLabel xLabel = new JLabel("X Coordinate:");
+		xCoordinatePane.add(xLabel, BorderLayout.NORTH);
+		
+		xCoordinateTextField = new JTextField();
+		xCoordinateTextField.setText("" + Camera.getCenter().getX());
+		xCoordinatePane.add(xCoordinateTextField, BorderLayout.SOUTH);
+				
+		return xCoordinatePane;
+	}
+	
+	private JPanel createYCoordinatePane() {
+		JPanel yCoordinatePane = new JPanel(new BorderLayout());
+		
+		JLabel yLabel = new JLabel("Y Coordinate:");
+		yCoordinatePane.add(yLabel, BorderLayout.NORTH);
+		
+		yCoordinateTextField = new JTextField();
+		yCoordinateTextField.setText("" + Camera.getCenter().getY());
+		yCoordinatePane.add(yCoordinateTextField, BorderLayout.SOUTH);
+				
+		return yCoordinatePane;
+	}
+	
+	private JPanel createScalePane() {
+		JPanel scalePane = new JPanel(new BorderLayout());
+		
+		JLabel yLabel = new JLabel("Scale:");
+		scalePane.add(yLabel, BorderLayout.NORTH);
+		
+		scaleTextField = new JTextField();
+		scaleTextField.setText("" + Camera.getScale());
+		scalePane.add(scaleTextField, BorderLayout.CENTER);
+
+		currentPositionButton = new JButton("Current Position");
+		currentPositionButton.addActionListener(new CurrentPositionListener());
+		scalePane.add(currentPositionButton, BorderLayout.SOUTH);		
+		
+		return scalePane;
+	}
+	
+	
 	private JPanel createIterationsPane() {
 		JPanel iterationsPane = new JPanel(new BorderLayout());
 		
@@ -75,13 +162,41 @@ public class ControlPanel extends JPanel {
 		iterationsPane.add(iterationsLabel, BorderLayout.NORTH);
 		
 		iterationsTextField = new JTextField();
-		iterationsPane.add(iterationsTextField, BorderLayout.CENTER);
+		iterationsTextField.setText("" + Computer.getIterations());
+		iterationsPane.add(iterationsTextField, BorderLayout.SOUTH);
+				
+		return iterationsPane;
+	}
+	
+	private JPanel createShadersPane() {
+		JPanel shadersPane = new JPanel(new BorderLayout());
+		
+		JLabel shadersLabel = new JLabel("N.o. Shaders:");
+		shadersPane.add(shadersLabel, BorderLayout.NORTH);
+		
+		shadersTextField = new JTextField();
+		shadersTextField.setText("" + Computer.getShaders());
+		shadersPane.add(shadersTextField, BorderLayout.SOUTH);
+				
+		return shadersPane;
+	}
+	
+	private JPanel createAntiAliasingPane() {
+		JPanel antiAliasingPane = new JPanel(new BorderLayout());
+		
+		JLabel antiAliasingLabel = new JLabel("Anti-aliasing:");
+		antiAliasingPane.add(antiAliasingLabel, BorderLayout.NORTH);
+		
+		antiAliasingTextField = new JTextField();
+		int t = Computer.getAntiAliasing();
+		antiAliasingTextField.setText("" + t * t);
+		antiAliasingPane.add(antiAliasingTextField, BorderLayout.CENTER);
 		
 		redrawButton = new JButton("Redraw");
 		redrawButton.addActionListener(new RedrawButtonListener());
-		iterationsPane.add(redrawButton, BorderLayout.SOUTH);
+		antiAliasingPane.add(redrawButton, BorderLayout.SOUTH);
 		
-		return iterationsPane;
+		return antiAliasingPane;
 	}
 
 	/**
@@ -129,24 +244,104 @@ public class ControlPanel extends JPanel {
 		return bottom;
 	}
 	
+	
+	private void resetNavigationEntries() {
+		xCoordinateTextField.setText("" + Camera.getCenter().getX());
+		yCoordinateTextField.setText("" + Camera.getCenter().getY());
+		scaleTextField.setText("" + Camera.getScale());
+	}
+	
+	
 	/**
-	 * Called when a button is used. Sets the iterations of the Computer and 
+	 * Called when a button is used. Updates the settings of the Computer and 
 	 * signals the parent.
 	 */
 	private void used() {
-		String text = iterationsTextField.getText();
+		setIterationsInComputer();
+		setShadersInComputer();
+		setAntiAliasingInComputer();
 		
-		int iterations = -1;
+		firePropertyChange("used", false, true);
+		
+		resetNavigationEntries();
+	}
+
+	
+	private void setCoordinatesInCamera() {
+		double x = Double.NaN;
 		try {
-			iterations = Integer.parseInt(text);
+			String text = xCoordinateTextField.getText();
+			x = Double.parseDouble(text);
 		} catch (NumberFormatException exc) {
-			iterationsTextField.setText("0");
+			xCoordinateTextField.setText("" + Camera.getCenter().getX());
 		}
 		
+		double y = Double.NaN;
+		try {
+			String text = yCoordinateTextField.getText();
+			y = Double.parseDouble(text);
+		} catch (NumberFormatException exc) {
+			yCoordinateTextField.setText("" + Camera.getCenter().getY());
+		}
+		
+		if (!Double.isNaN(x) && !Double.isNaN(y)) {
+			Camera.setCenter(x, y);
+		}
+	}
+
+	private void setScaleInCamera() {
+		int scale = 0;
+		try {
+			String text = scaleTextField.getText();
+			scale = Integer.parseInt(text);
+		} catch (NumberFormatException exc) {
+			scaleTextField.setText("" + Camera.getScale());
+		}
+		if (scale > 0)
+			Camera.setScale(scale);	
+	}
+	
+
+	private void setIterationsInComputer() {
+		int iterations = 0;
+		try {
+			String text = iterationsTextField.getText();
+			iterations = Integer.parseInt(text);
+		} catch (NumberFormatException exc) {
+			iterationsTextField.setText("" + Computer.getIterations());
+		}
 		if (iterations > 0)
 			Computer.setIterations(iterations);
-		firePropertyChange("used", false, true);
 	}
+	
+	private void setShadersInComputer() {
+		int shaders = 0;
+		try {
+			String text = shadersTextField.getText();
+			shaders = Integer.parseInt(text);
+		} catch (NumberFormatException exc) {
+			shadersTextField.setText("" + Computer.getShaders());
+		}
+		if (shaders > 0)
+			Computer.setShaders(shaders);
+	}
+	
+	private void setAntiAliasingInComputer() {
+		int antiAliasing = 0;
+		try {
+			String text = antiAliasingTextField.getText();
+			antiAliasing = Integer.parseInt(text);
+			antiAliasing = (int)Math.sqrt(antiAliasing);
+			antiAliasingTextField.setText("" + antiAliasing * antiAliasing);
+		} catch (NumberFormatException exc) {
+			int t = Computer.getAntiAliasing();
+			antiAliasingTextField.setText("" + t * t);
+		}
+		
+		if (antiAliasing > 0)
+			Computer.setAntiAliasing(antiAliasing);
+	}
+	
 	
 	/**
 	 * Tells the camera to zoom out, when the zoom out button is pressed.
@@ -219,6 +414,18 @@ public class ControlPanel extends JPanel {
 			used();
 		}
 	}
+
+	
+	/**
+	 * Tells the parent to redraw the canvas.
+	 * @author szm
+	 */
+	private class CurrentPositionListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			resetNavigationEntries();
+		}
+	}
 	
 	/**
 	 * Tells the parent to redraw the canvas.
@@ -227,23 +434,9 @@ public class ControlPanel extends JPanel {
 	private class RedrawButtonListener implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			setCoordinatesInCamera();
+			setScaleInCamera();
 			used();
-		}
-	}
-	
-	/**
-	 * Tells the parent to redraw the canvas.
-	 * @author szm
-	 */
-	private class ResolutionaryButtonListener implements ActionListener {
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			Mandelbrot.canvasFrame.setBounds(
-					-Mandelbrot.canvasFrame.insets().left, 
-					-Mandelbrot.canvasFrame.insets().top, 
-					1366 + Mandelbrot.canvasFrame.insets().left + Mandelbrot.canvasFrame.insets().right, 
-					768 + Mandelbrot.canvasFrame.insets().top + Mandelbrot.canvasFrame.insets().bottom
-			);
 		}
 	}
 }
