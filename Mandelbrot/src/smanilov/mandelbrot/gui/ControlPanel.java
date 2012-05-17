@@ -9,6 +9,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import smanilov.mandelbrot.Mandelbrot;
 import smanilov.mandelbrot.compute.Camera;
 import smanilov.mandelbrot.compute.Computer;
 
@@ -424,6 +425,7 @@ public class ControlPanel extends JPanel {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			resetNavigationEntries();
+//			Mandelbrot.canvas.setSize(3311, 4681);
 		}
 	}
 	

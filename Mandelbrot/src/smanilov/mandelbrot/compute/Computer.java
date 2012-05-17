@@ -76,7 +76,12 @@ public class Computer {
 	/**
 	 * Used for more complex locking of the toDoList.
 	 */
-	private static final ReentrantLock queueLock = new ReentrantLock(); 
+	private static final ReentrantLock queueLock = new ReentrantLock();
+
+	/**
+	 * Maximum elements in the Queue.
+	 */
+	protected static final int MAX_QUEUE_SIZE = 1048576; 
 	
 	
 	/**
@@ -218,6 +223,7 @@ public class Computer {
 					x = (int) (width * Math.random());
 					y = (int) (height * Math.random());
 					if (!added[y][x]) {
+						while(toDoList.size() >= MAX_QUEUE_SIZE) shieldedSleep(1);
 						toDoList.add(new Point(x, y));
 						++nAdded;
 						added[y][x] = true;
@@ -226,6 +232,15 @@ public class Computer {
 				long interval = System.currentTimeMillis() - startTime;
 				active = false;
 				System.out.println("Producer: [END after " + interval + " ms]");
+			}
+
+			/**
+			 * Just to make it simpler in the complicated code.
+			 * @param i amount of ms to sleep
+			 */
+			private void shieldedSleep(int i) {
+				System.out.println("SHIELD!");
+				try { Thread.sleep(1); } catch (InterruptedException e) { }
 			}
 		};
 		return producerThread;
