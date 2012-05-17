@@ -25,11 +25,13 @@ public class CanvasPanel extends JPanel {
 	/**
 	 * Dark blue.
 	 */
-	private static final Color backgroundColor = new Color(36, 201, 255);
+	public static final Color backgroundColor = new Color(36, 201, 255);
+	// TODO: move to a better place.
+	
 	/**
 	 * Pale yellow.
 	 */
-	private static final Color foregroundColor = new Color(0, 0, 0);
+	public static final Color foregroundColor = new Color(0, 0, 0);
 	
 	/**
 	 * The current render of the Mandelbrot set.
@@ -63,8 +65,7 @@ public class CanvasPanel extends JPanel {
 		}, 0, 50);
 	}
 	
-	
-	
+		
 	@Override
 	public void paint(Graphics graphics) {
 		super.paint(graphics);
@@ -85,13 +86,18 @@ public class CanvasPanel extends JPanel {
 		graphics.drawImage(drawing, 0, 0, null);
 		drawingLock.unlock();
 		
+		firePropertyChange("redrawn", false, true);
+		
 		for (Component child : getComponents()) {
 			child.repaint();
 		}
 	}
 
 	private void resizeDrawing(int width, int height) {
-		if (drawing.getWidth(null) != width || drawing.getHeight(null) != height) {
+		if ((drawing.getWidth(null) != width || drawing.getHeight(null) != height) &&
+			width > 0 && 
+			height > 0
+		) {
 			drawing = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 			redraw = true;
 		}

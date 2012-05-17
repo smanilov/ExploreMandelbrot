@@ -6,10 +6,6 @@ import java.awt.geom.Point2D;
  * Describes which part of the complex plane is visible.
  * @author szm
  */
-/**
- * @author stas
- *
- */
 public class Camera {
 	
 	/**

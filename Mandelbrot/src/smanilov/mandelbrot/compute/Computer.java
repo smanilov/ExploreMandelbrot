@@ -23,7 +23,7 @@ import org.apache.commons.math3.complex.Complex;
  * one is stopped.
  * 
  * TODO: 
- *  1. Anti-aliasing
+ *  +1. Anti-aliasing
  *  2. Simple color schemes (set color, list of color gradient with list of positions on the gradient [e.g. [0.0, 0.5, 1.0]])
  * @author szm
  */
@@ -53,6 +53,22 @@ public class Computer {
 	private static int currentDrawingId = -1;
 	
 	/**
+	 * The number of pixels drawn in the last drawing step.
+	 */
+	private static int nDrawn = 0;
+	
+	/**
+	 * The number of pixels in the current image to draw.
+	 */
+	private static int maxDrawn = 0;
+	
+	/**
+	 * Lock nDrawn with this when incrementing.
+	 */
+	private static final ReentrantLock nDrawnLock = new ReentrantLock();
+	
+	
+	/**
 	 * A list containing the points that should be drawn next.
 	 */
 	private static Queue<Point> toDoList;
@@ -62,10 +78,12 @@ public class Computer {
 	 */
 	private static final ReentrantLock queueLock = new ReentrantLock(); 
 	
+	
 	/**
-	 * Is there a producer running?
+	 * Is there a producer running? If not, stop the shaders after the queue is emptied.
 	 */
-	private static boolean producerRunning = false;
+	private static boolean active = false;
+	
 	
 	/**
 	 * The starting time of the current drawing step.
@@ -90,7 +108,7 @@ public class Computer {
 			final int scale, 
 			final Point2D center
 	) {
-		initDrawStep();
+		initDrawStep(drawing);
 		
 		Thread pt = createProducerThread(drawing.getWidth(null), drawing.getHeight(null));
 		pt.start();
@@ -146,11 +164,18 @@ public class Computer {
 		Computer.antiAliasing = antialiasing;
 	}
 	
+	/**
+	 * Gets the progress of the current drawing step from 0.0 to 1.0.
+	 */
+	public static double getProgress() {
+		return (double) nDrawn / maxDrawn;
+	}
 	
 	/**
 	 * Resets the state of the class for a new draw step.
+	 * @param drawing Used to extract the number of pixels to draw.
 	 */
-	private static void initDrawStep() {
+	private static void initDrawStep(Image drawing) {
 		++currentDrawingId;
 		if (toDoList != null) {
 			queueLock.lock();
@@ -158,7 +183,10 @@ public class Computer {
 			queueLock.unlock();
 		}
 		toDoList = new LinkedBlockingQueue<Point>();
-		producerRunning = false;
+		active = true;
+		
+		maxDrawn = drawing.getWidth(null) * drawing.getHeight(null); 
+		nDrawn = 0;
 		
 		startTime = System.currentTimeMillis();
 	}
@@ -175,7 +203,7 @@ public class Computer {
 			@Override
 			public void run() {
 				System.out.println("Producer: [START]");
-				producerRunning = true;
+				active = true;
 				super.run();
 				int id = currentDrawingId;
 				
@@ -196,7 +224,7 @@ public class Computer {
 					}
 				}
 				long interval = System.currentTimeMillis() - startTime;
-				producerRunning = false;
+				active = false;
 				System.out.println("Producer: [END after " + interval + " ms]");
 			}
 		};
@@ -229,7 +257,7 @@ public class Computer {
 				
 				Point pixelCenter = new Point(width / 2, height / 2);
 				
-				while (producerRunning) {
+				while (active) {
 					// TODO: remove busy-wait
 					while (true) {
 						queueLock.lock();
@@ -277,6 +305,9 @@ public class Computer {
 							g.fillRect(i, j, 1, 1);
 							drawingLock.unlock();
 						}
+						nDrawnLock.lock();
+						++nDrawn;
+						nDrawnLock.unlock();
 					}
 				}
 				long interval = System.currentTimeMillis() - startTime;
