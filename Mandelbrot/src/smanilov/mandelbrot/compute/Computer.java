@@ -22,8 +22,7 @@ import org.apache.commons.math3.complex.Complex;
  * The drawing is done in steps and when a new step is invoked the previous 
  * one is stopped.
  * 
- * TODO: 
- *  +1. Anti-aliasing
+ * TODO:
  *  2. Simple color schemes (set color, list of color gradient with list of positions on the gradient [e.g. [0.0, 0.5, 1.0]])
  * @author szm
  */
@@ -306,10 +305,12 @@ public class Computer {
 						}
 						
 						k /= antiAliasing * antiAliasing; 
-						if (k == currentIterations) {
+						if (Math.ceil(k) == currentIterations) {
 							drawingLock.lock();
 							Graphics g = drawing.getGraphics();
-							g.setColor(foregroundColor);
+							Color color = mixColors(foregroundColor, backgroundColor, k + 1 - currentIterations);
+
+							g.setColor(color);
 							g.fillRect(i, j, 1, 1);
 							drawingLock.unlock();
 						} else {
@@ -348,9 +349,9 @@ public class Computer {
 	 */
 	private static Color mixColors(Color c1, Color c2, double proportion) {
 		Color result = new Color(
-				(int)(c1.getRed() * proportion + c2.getRed() * (1 - proportion)),
-				(int)(c1.getGreen() * proportion + c2.getGreen() * (1 - proportion)),
-				(int)(c1.getBlue() * proportion + c2.getBlue() * (1 - proportion))
+				(int)(c1.getRed() * (1 - proportion) + c2.getRed() * proportion),
+				(int)(c1.getGreen() * (1 - proportion) + c2.getGreen() * proportion),
+				(int)(c1.getBlue() * (1 - proportion) + c2.getBlue() * proportion)
 		);
 		return result;
 	}

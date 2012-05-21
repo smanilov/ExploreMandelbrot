@@ -9,20 +9,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import smanilov.mandelbrot.Mandelbrot;
 import smanilov.mandelbrot.compute.Camera;
 import smanilov.mandelbrot.compute.Computer;
 
 /**
- * Includes the controlling components - arrows, +, -
+ * Includes the controlling components (arrows, +, -) and generation settings.
  * 
  * TODO:
  *  1. Basic mode
  *  	1. Color mixer for the color scheme
- *  2. Advanced
- *		+1. Add iterations entry
- *		+2. Shader threads entry
- *		+3. Anti-aliasing entry
  *  
  * @author szm
  */
@@ -43,7 +38,9 @@ public class ControlPanel extends JPanel {
 	private JTextField iterationsTextField;
 	private JTextField shadersTextField;
 	private JTextField antiAliasingTextField;
+	
 	private JButton redrawButton;
+	private JButton colorsButton;
 	
 	public ControlPanel() {
 		super(true);
@@ -54,7 +51,10 @@ public class ControlPanel extends JPanel {
 		add(navigationPane, BorderLayout.NORTH);
 		
 		JPanel entriesPane = createEntriesPane();
-		add(entriesPane, BorderLayout.SOUTH);
+		add(entriesPane, BorderLayout.CENTER);
+		
+		JPanel buttonsPane = createButtonsPane();
+		add(buttonsPane, BorderLayout.SOUTH);
 	}
 
 	private JPanel createNavigationPane() {
@@ -69,7 +69,6 @@ public class ControlPanel extends JPanel {
 		return navigationPane;
 	}
 	
-	
 	private JPanel createEntriesPane() {
 		JPanel entriesPane = new JPanel(new BorderLayout());
 		
@@ -80,6 +79,20 @@ public class ControlPanel extends JPanel {
 		entriesPane.add(advancedPane, BorderLayout.SOUTH);
 		
 		return entriesPane;
+	}
+	
+	private JPanel createButtonsPane() {
+		JPanel buttonsPane = new JPanel(new BorderLayout());
+		
+		redrawButton = new JButton("Redraw");
+		redrawButton.addActionListener(new RedrawButtonListener());
+		buttonsPane.add(redrawButton, BorderLayout.NORTH);
+		
+		colorsButton = new JButton("Colors");
+		colorsButton.addActionListener(new ColorsButtonListener());
+		buttonsPane.add(colorsButton, BorderLayout.SOUTH);
+
+		return buttonsPane;
 	}
 	
 	
@@ -191,11 +204,7 @@ public class ControlPanel extends JPanel {
 		antiAliasingTextField = new JTextField();
 		int t = Computer.getAntiAliasing();
 		antiAliasingTextField.setText("" + t * t);
-		antiAliasingPane.add(antiAliasingTextField, BorderLayout.CENTER);
-		
-		redrawButton = new JButton("Redraw");
-		redrawButton.addActionListener(new RedrawButtonListener());
-		antiAliasingPane.add(redrawButton, BorderLayout.SOUTH);
+		antiAliasingPane.add(antiAliasingTextField, BorderLayout.SOUTH);
 		
 		return antiAliasingPane;
 	}
@@ -439,6 +448,17 @@ public class ControlPanel extends JPanel {
 			setCoordinatesInCamera();
 			setScaleInCamera();
 			used();
+		}
+	}
+	
+	/**
+	 * Tells the parent to open the color settings window.
+	 * @author szm
+	 */
+	private class ColorsButtonListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			firePropertyChange("colors", false, true);
 		}
 	}
 }

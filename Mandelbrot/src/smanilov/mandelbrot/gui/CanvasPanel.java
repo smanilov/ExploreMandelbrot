@@ -13,6 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.JPanel;
 
+import smanilov.mandelbrot.Colors;
 import smanilov.mandelbrot.compute.Camera;
 import smanilov.mandelbrot.compute.Computer;
 
@@ -21,18 +22,7 @@ import smanilov.mandelbrot.compute.Computer;
  * @author szm
  */
 public class CanvasPanel extends JPanel {
-	
-	/**
-	 * Dark blue.
-	 */
-	public static final Color backgroundColor = new Color(36, 201, 255);
-	// TODO: move to a better place.
-	
-	/**
-	 * Pale yellow.
-	 */
-	public static final Color foregroundColor = new Color(0, 0, 0);
-	
+		
 	/**
 	 * The current render of the Mandelbrot set.
 	 */
@@ -74,8 +64,8 @@ public class CanvasPanel extends JPanel {
 			redraw = false;
 			Computer.drawMandelbrotCrop(
 					drawing,
-					foregroundColor,
-					backgroundColor,
+					Colors.getColor(),
+					Color.BLACK,
 					drawingLock,
 					Camera.getScale(), 
 					Camera.getCenter()

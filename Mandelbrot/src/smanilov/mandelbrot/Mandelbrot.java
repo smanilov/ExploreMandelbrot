@@ -14,6 +14,7 @@ import javax.swing.JProgressBar;
 
 import smanilov.mandelbrot.compute.Computer;
 import smanilov.mandelbrot.gui.CanvasPanel;
+import smanilov.mandelbrot.gui.ColorsPanel;
 import smanilov.mandelbrot.gui.ControlPanel;
 
 /**
@@ -24,9 +25,11 @@ import smanilov.mandelbrot.gui.ControlPanel;
  * @author szm
  */
 public class Mandelbrot {
-	
+
 	private static JFrame mainFrame;
 	private static JFrame controlFrame;
+	private static JFrame colorsFrame;
+	
 	private static CanvasPanel canvas;
 	private static ControlPanel control;
 	
@@ -57,10 +60,12 @@ public class Mandelbrot {
 		// Setup the content pane.
 		JPanel mainContentPane = new JPanel(new BorderLayout());
 		progressBar = new JProgressBar(0, 1000000000);
-		progressBar.setForeground(CanvasPanel.backgroundColor);
+		progressBar.setForeground(Colors.getColor());
 		
 		canvas = new CanvasPanel();
 		canvas.addPropertyChangeListener("redrawn", new CanvasPanelRedrawnListener());
+//		canvas.addKeyListener(new GlobalKeyListener()); TODO
+		
 		mainContentPane.add(canvas, BorderLayout.CENTER);
 		mainContentPane.add(progressBar, BorderLayout.SOUTH);
 		mainFrame.setContentPane(mainContentPane);
@@ -80,6 +85,8 @@ public class Mandelbrot {
 		
 		control = new ControlPanel();
 		control.addPropertyChangeListener("used", new ControlPanelUsedListener());
+		control.addPropertyChangeListener("colors", new ControlPanelColorListener());
+//		control.addKeyListener(new GlobalKeyListener());
 		
 		controlFrame.add(control);
 		controlFrame.pack();
@@ -89,12 +96,26 @@ public class Mandelbrot {
 		
 		controlFrame.setVisible(true);
 	}
+	
+	private static void openColorsFrame() {
+		colorsFrame = new JFrame();
+		ColorsPanel cp = new ColorsPanel();
+		cp.addPropertyChangeListener("colorSet", new ColorPanelColorSetListener());
+		colorsFrame.add(cp);
+		colorsFrame.pack();
+		colorsFrame.setVisible(true);
+	}
 
 	private static void stickControlFrameToCanvasFrame() {
 		if (controlFrame != null)
 			controlFrame.setLocation(mainFrame.getX() + mainFrame.getWidth(), mainFrame.getY());
 	}	
 	
+	private static void redrawCanvas() {
+		canvas.setRedraw(true);
+		canvas.repaint();
+	}
+
 	private static class CanvasPanelRedrawnListener implements PropertyChangeListener {
 		
 		@Override
@@ -107,8 +128,26 @@ public class Mandelbrot {
 		
 		@Override
 		public void propertyChange(PropertyChangeEvent evt) {
-			canvas.setRedraw(true);
-			canvas.repaint();
+			redrawCanvas();
 		}
+	}
+
+	private static class ControlPanelColorListener implements PropertyChangeListener {
+
+		@Override
+		public void propertyChange(PropertyChangeEvent evt) {
+			openColorsFrame();
+		}
+
+	}
+
+	private static class ColorPanelColorSetListener implements PropertyChangeListener {
+
+		@Override
+		public void propertyChange(PropertyChangeEvent evt) {
+			progressBar.setForeground(Colors.getColor());
+			redrawCanvas();
+		}
+		
 	}
 }
