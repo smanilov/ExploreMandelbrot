@@ -97,6 +97,9 @@ public class Mandelbrot {
 		controlFrame.setVisible(true);
 	}
 	
+	/**
+	 * Displays the frame that allows color selection.
+	 */
 	private static void openColorsFrame() {
 		colorsFrame = new JFrame();
 		ColorsPanel cp = new ColorsPanel();
@@ -116,6 +119,9 @@ public class Mandelbrot {
 		canvas.repaint();
 	}
 
+	/**
+	 * Invoked when the visible image is changed.
+	 */
 	private static class CanvasPanelRedrawnListener implements PropertyChangeListener {
 		
 		@Override
@@ -124,6 +130,11 @@ public class Mandelbrot {
 		}
 	}
 	
+	/**
+	 * Invoked when a button of the control panel, which effect requires a redrawing of the 
+	 * visible image, is pressed. This pattern is used so the ControlPanel does not depend
+	 * on the main screen. 
+	 */
 	private static class ControlPanelUsedListener implements PropertyChangeListener {
 		
 		@Override
@@ -132,6 +143,9 @@ public class Mandelbrot {
 		}
 	}
 
+	/**
+	 * Invoked when the Colors button of the ControlPanel is pressed.
+	 */
 	private static class ControlPanelColorListener implements PropertyChangeListener {
 
 		@Override
@@ -141,6 +155,9 @@ public class Mandelbrot {
 
 	}
 
+	/**
+	 * Invoked when a new color is selected as foreground.
+	 */
 	private static class ColorPanelColorSetListener implements PropertyChangeListener {
 
 		@Override
