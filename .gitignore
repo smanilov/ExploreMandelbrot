@@ -2,3 +2,5 @@ zoom*
 *.png
 *.jpg
 Mandelbrot/bin
+*metadata
+*~
